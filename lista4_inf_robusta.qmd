@@ -1,0 +1,59 @@
+---
+title:  \LARGE \textbf{MAE5834 - Estudo de Simulação Inferência Robusta}
+author: 
+  - Jaqueline Lamas da Silva (17646475),
+
+  - Olian  Castanha Lima (13686261),
+  
+  - Oyindamola Olubusola Alalade (17647114)
+format: 
+    pdf:
+      fig-width: 5
+      fig-height: 4
+      fig-align: center
+      number-sections: true
+editor: source
+logo: logo.png
+toc: true
+toc-title: "Sumário"
+font-family: arial
+font-size: 10pt
+lg: pt
+
+#Decomente se quiser um template bonitinho!
+
+header-includes:
+- \usepackage{xcolor}
+- \definecolor{azulime}{HTML}{1C3B6F}
+- \usepackage{hyperref}
+- \AtBeginDocument{\hypersetup{colorlinks=true, urlcolor=azulime,linkcolor=azulime, citecolor=azulime}}
+- \usepackage{fancyhdr}
+- \usepackage{graphicx}
+- \pagestyle{fancy}
+- \fancyhf{}
+- \fancyhead[R]{\includegraphics[width=2.5cm]{logo.png}}
+- \fancyfoot[R]{\thepage}
+- \renewcommand{\headrulewidth}{0pt}
+- \renewcommand{\footrulewidth}{0pt}
+- \usepackage{titling}
+- \pretitle{\begin{center}\includegraphics[width=4cm]{logo.png}\\[1cm]}
+- \posttitle{\end{center}\thispagestyle{empty}\setcounter{page}{1}}
+---
+
+```{r setup, include=FALSE, warning=FALSE, results = 'asis', echo=FALSE}
+cores <- c("#1C3B6F", "coral","#8FA9CC","#F5B1A4")
+paleta <- c("#6f1926", "#de324c", "#f4895f", "#f8e16f", "#95cf92", "#369acc", "#9656a2", "#cbabd1")
+suppressMessages(library("dplyr"))
+
+```
+
+
+## Introdução
+
+Este trabalho prático tem como objetivo avaliar o desempenho do
+MDPDE em comparação ao EMV sob diferentes cenários de contaminação e valores da constante de
+afinação $\alpha \in [0,1)$.
+
+
+##
+
