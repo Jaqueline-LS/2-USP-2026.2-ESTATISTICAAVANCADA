@@ -23,6 +23,7 @@ lg: pt
 #Decomente se quiser um template bonitinho!
 
 header-includes:
+- \usepackage{amsmath}
 - \usepackage{xcolor}
 - \definecolor{azulime}{HTML}{1C3B6F}
 - \usepackage{hyperref}
@@ -44,13 +45,13 @@ header-includes:
 cores <- c("#1C3B6F", "coral","#8FA9CC","#F5B1A4")
 paleta <- c("#6f1926", "#de324c", "#f4895f", "#f8e16f", "#95cf92", "#369acc", "#9656a2", "#cbabd1")
 suppressMessages(library("dplyr"))
-
+suppressMessages(library("gamlss"))
 # Sorteio do modelo a ser trabalhado
 set.seed(123)
 modelos<-c(1:10)
 sample(modelos,size=1)
 ```
-
+\newpage
 
 ## Introdução
 
@@ -65,11 +66,67 @@ MDPDE em comparação ao EMV sob diferentes cenários de contaminação e valore
 Seja Y uma variável aleatória com distribuição gama de média $\mu$ e coeficiente de variação $\phi^{-\frac{1}{2}}$. A função de densidade de probabilidade de Y é dada por:
 
 \begin{align*}
-f_Y(\mu,\phi) = exp\left\{ \phi \left[ \frac{-y}{\mu} - log(\mu) \right] - log(\Gamma(\phi) + \phi log(\phi y) - log(y) )\right\}
-\end{align*},
-
-em que $y>0$, $\phi>0$, $\mu>0$ e $\Gamma(\phi) = \int_0^\infty t ^{\phi -1} e^{-t}dt$ é a função gama.
+f_Y(\mu,\phi) = exp\left\{ \phi \left[ \frac{-y}{\mu} - log(\mu) \right] - log(\Gamma(\phi)) + \phi log(\phi y) - log(y) \right\},
+\end{align*} em que $y>0$, $\phi>0$, $\mu>0$ e $\Gamma(\phi) = \int_0^\infty t ^{\phi -1} e^{-t}dt$ é a função gama.
 
 **Vetor Escore**
+
+Seja $Y_1, \cdots, Y_n$ uma amostra aleatória de Y
+
+\begin{align*}
+Y_i|\mathbf{x_i} \overset{\text{ind}}{\sim} Gamma (\mu_i, \phi) \\
+\mu_i = log(\eta_i), \eta_i = \mathbf{x_i}^{\intercal} \boldsymbol{\beta}
+\end{align*}
+
+Com isso, o vetor escore para a i-ésima observação é dado por:
+\begin{align*} 
+u_{\boldsymbol{\beta}}(x_i) = \phi \frac{(y_i - \mu_i)}{\mu_i} \mathbf{x_i},
+\end{align*}
+em que $\mathbf{x_i}$ é a i-ésima linha da matriz $\mathbf{X}$.
+
+**Função objetivo**
+
+O MDPDE minimiza a seguinte função perda: 
+
+\begin{align}\label{eq.1}
+H_n(\boldsymbol{\beta}) = \frac{1}{n} \sum_{i=1}^n \left[ \int_{\mathcal{X}} f_Y^{1+\alpha}(z; \mu_i, \phi) \, dz - \left( 1 + \frac{1}{\alpha} \right) f_Y^\alpha(Y_i; \mu_i, \phi) \right], \text{ para } \alpha \in [0,1).
+\end{align}
+
+
+\begin{align*}
+\psi(x,\beta) = u_{\beta}(y_i) f_Y^{\alpha}(y;\mu, \phi)-\int  u_{\beta}(z_i) f_Y^{1+\alpha}(z;\mu, \phi)(z)dz
+\end{align*}
+
+
+
+#### (b)
+Fixe os parâmetros verdadeiros em valores razoáveis e o tamanho amostral em $n \in  {50, 200, 1000}$.
+Gere valores para as covariáveis. Adote M = 3000 replicações de Monte Carlo
+```{r}
+M<-30
+n<-c(50,200,1000)
+beta<-c(0.3,0.1)
+phi<- 4  # phi = 1/sigma2
+sigma<-1/sqrt(phi)
+geraRegGamma<-function(n)
+{
+  X<-matrix(1,nrow=n,ncol=2)
+  X[,2]<-runif(n,min=1, max=10)
+  mu<-exp(X%*%beta) # ligacao log
+  y <- rGA(n = n, mu = mu, sigma = sigma)
+  return(dados=data.frame(resp=y,x=X[,1],x2=X[,2]))
+}
+
+amostra<-vector("list",M)
+for (i in 1:M)
+{
+  dados<-geraRegGamma(1000)
+  suppressMessages(attach(dados))
+  theta<-gamlss(resp ~ x2, family=GA, trace=F)
+}
+
+```
+
+
 
 
