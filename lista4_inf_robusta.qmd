@@ -109,16 +109,22 @@ beta<-c(0.3,0.1)
 phi<- 4  # phi = 1/sigma2
 sigma<-1/sqrt(phi)
 
-geraMU<-function(n)
+geraMU<-function(n, epsilon=0)
 {
   X<-matrix(1,nrow=n,ncol=2)
   X[,2]<-runif(n,min=1, max=10)
+  n_outliers <- floor(n * epsilon)
+  if (n_outliers > 0) {
+    idx_outliers <- sample(1:n, size = n_outliers, replace = FALSE)
+    X[idx_outliers,2]<- runif(n_outliers, min = 16, max = 17)
+  }
+
   mu<-exp(X%*%beta) # ligacao log
   return(mu)
 }
 
 
-geraRegGamma<-function(n,mu, epsilon=0.05)
+geraRegGamma<-function(n,mu, epsilon=0)
 {
   i<-which(tam.n==n)
   y <- rGA(n = n, mu = mu[[i]], sigma = sigma)
@@ -155,14 +161,17 @@ dados<-geraRegGamma(50,mu,epsilon = 0)
 
 ii) Cenário C1 (Outliers verticais na resposta Y): Uma fração $\epsilon$ das observações é substituída por valores atípicos severos na resposta Y.
 ```{r}
-curve(dGA(x,mu=mean(mu[[3]]), sigma), from=0, to=15)
+
 
 
 ```
+iii) Cenário C2 (Pontos de alavancagem em X): Uma fração $\epsilon$ do vetor de covariáveis contínuas é substituída por pontos extremos/distantes.
+```{r}
+mu<-geraMU(50, epsilon = 0.05)
+dados<-geraRegGamma(50, mu)
+```
 
 
-
-iii) Cenário C2 (Pontos de alavancagem em X): Uma fração ϵ do vetor de covariáveis contínuas é substituída por pontos extremos/distantes.
 iv) Cenário C3 (Contaminação mista X e Y): Combinação simultânea de pontos de alavancagem em xi1 com resposta discrepante em Y.
 A depender do modelo, contaminações específicas precisam ser consideradas. De toda forma,
 essas contaminações devem buscar englobar os casos apresentados acima.
