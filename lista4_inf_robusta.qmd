@@ -176,6 +176,9 @@ iv) Cenário C3 (Contaminação mista X e Y): Combinação simultânea de pontos
 A depender do modelo, contaminações específicas precisam ser consideradas. De toda forma,
 essas contaminações devem buscar englobar os casos apresentados acima.
 
+```{r}
+
+```
 
 
 
