@@ -66,7 +66,7 @@ MDPDE em comparação ao EMV sob diferentes cenários de contaminação e valore
 Seja Y uma variável aleatória com distribuição gama de média $\mu$ e coeficiente de variação $\phi^{-\frac{1}{2}}$. A função de densidade de probabilidade de Y é dada por:
 
 \begin{align*}
-f_Y(\mu,\phi) = exp\left\{ \phi \left[ \frac{-y}{\mu} - log(\mu) \right] - log(\Gamma(\phi)) + \phi log(\phi y) - log(y) \right\},
+f_Y(y,\mu,\phi) = exp\left\{ \phi \left[ \frac{-y}{\mu} - log(\mu) \right] - log(\Gamma(\phi)) + \phi log(\phi y) - log(y) \right\},
 \end{align*} em que $y>0$, $\phi>0$, $\mu>0$ e $\Gamma(\phi) = \int_0^\infty t ^{\phi -1} e^{-t}dt$ é a função gama.
 
 **Vetor Escore**
@@ -80,7 +80,7 @@ Y_i|\mathbf{x_i} \overset{\text{ind}}{\sim} Gamma (\mu_i, \phi) \\
 
 Com isso, o vetor escore para a i-ésima observação é dado por:
 \begin{align*} 
-u_{\boldsymbol{\beta}}(x_i) = \phi \frac{(y_i - \mu_i)}{\mu_i} \mathbf{x_i},
+u_{\boldsymbol{\beta}}(y_i) = \phi \frac{(y_i - \mu_i)}{\mu_i} \mathbf{x_i},
 \end{align*}
 em que $\mathbf{x_i}$ é a i-ésima linha da matriz $\mathbf{X}$.
 
