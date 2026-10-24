@@ -45,15 +45,31 @@ cores <- c("#1C3B6F", "coral","#8FA9CC","#F5B1A4")
 paleta <- c("#6f1926", "#de324c", "#f4895f", "#f8e16f", "#95cf92", "#369acc", "#9656a2", "#cbabd1")
 suppressMessages(library("dplyr"))
 
+# Sorteio do modelo a ser trabalhado
+set.seed(123)
+modelos<-c(1:10)
+sample(modelos,size=1)
 ```
 
 
 ## Introdução
 
 Este trabalho prático tem como objetivo avaliar o desempenho do
-MDPDE em comparação ao EMV sob diferentes cenários de contaminação e valores da constante de
-afinação $\alpha \in [0,1)$.
+MDPDE em comparação ao EMV sob diferentes cenários de contaminação e valores da constante de afinação $\alpha \in [0,1)$. O modelo sorteado foi o Gamma.
 
 
-##
+#### (a) 
+
+**Para o modelo sorteado, escreva a função de densidade, o vetor de escore e a função objetivo do MDPDE a ser minimizada.**
+
+Seja Y uma variável aleatória com distribuição gama de média $\mu$ e coeficiente de variação $\phi^{-\frac{1}{2}}$. A função de densidade de probabilidade de Y é dada por:
+
+\begin{align*}
+f_Y(\mu,\phi) = exp\left\{ \phi \left[ \frac{-y}{\mu} - log(\mu) \right] - log(\Gamma(\phi) + \phi log(\phi y) - log(y) )\right\}
+\end{align*},
+
+em que $y>0$, $\phi>0$, $\mu>0$ e $\Gamma(\phi) = \int_0^\infty t ^{\phi -1} e^{-t}dt$ é a função gama.
+
+**Vetor Escore**
+
 
