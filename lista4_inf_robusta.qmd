@@ -163,7 +163,7 @@ ii) Cenário C1 (Outliers verticais na resposta Y): Uma fração $\epsilon$ das 
 
 
 
-
+test
 ```{r}
 
 
