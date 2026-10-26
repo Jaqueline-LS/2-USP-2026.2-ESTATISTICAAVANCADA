@@ -160,6 +160,10 @@ dados<-geraRegGamma(50,mu,epsilon = 0)
 ```
 
 ii) Cenário C1 (Outliers verticais na resposta Y): Uma fração $\epsilon$ das observações é substituída por valores atípicos severos na resposta Y.
+
+
+
+
 ```{r}
 
 
