@@ -42,11 +42,11 @@ header-includes:
 ---
 
 ```{r setup, include=FALSE, warning=FALSE, results = 'asis', echo=FALSE}
-cores <- c("#1C3B6F", "coral","#8FA9CC","#F5B1A4")
-paleta <- c("#6f1926", "#de324c", "#f4895f", "#f8e16f", "#95cf92", "#369acc", "#9656a2", "#cbabd1")
+cores<-c("#c2a5cf","#BAF3DE","#C9E69E","#FF9B95","#FFC29A")
 suppressMessages(library("dplyr"))
 suppressMessages(library("gamlss"))
 suppressMessages(source("estimacao.R"))
+suppressMessages(library("doParallel"))
 # Sorteio do modelo a ser trabalhado
 set.seed(123)
 modelos<-c(1:10)
@@ -94,70 +94,165 @@ H_n(\boldsymbol{\beta}) = \frac{1}{n} \sum_{i=1}^n \left[ \int_{\mathcal{X}} f_Y
 \end{align}
 
 
+Então a função score é:
 \begin{align*}
-\psi(x,\beta) = u_{\beta}(y_i) f_Y^{\alpha}(y;\mu, \phi)-\int  u_{\beta}(z_i) f_Y^{1+\alpha}(z;\mu, \phi)(z)dz
+\psi(y_i,\beta) = u_{\beta}(y_i) f_Y^{\alpha}(y_i;\mu_i, \phi)-\int_{\mathcal{X}}  u_{\beta}(z) f_Y^{1+\alpha}(z;\mu, \phi)(z)dz
 \end{align*}
+
+E as estimativas são obtidas resolvendo o sistema de equações de estimação:
+   $$\sum_{i=1}^n \psi_i(y_i, \beta) = \mathbf{0}$$
 
 
 
 #### (b)
-Fixe os parâmetros verdadeiros em valores razoáveis e o tamanho amostral em $n \in  {50, 200, 1000}$.
-Gere valores para as covariáveis. Adote M = 3000 replicações de Monte Carlo
-```{r}
-M<-3000
+
+Modelo verdadeiro:
+\begin{align*}
+Y_i|\mathbf{x_i} \overset{\text{ind}}{\sim} Gamma (\mu_i, \phi) \\
+\mu_i = log(\eta_i), \eta_i = \beta_0 + \beta_1 x_{i1}
+\end{align*}, em que
+
+$$\boldsymbol{\beta} = (0.3, 0.1)^\intercal;\ \phi=4;\ x_{i1} \sim U(1,10);\ i=1,\cdots,n. $$
+
+```{r, echo=FALSE}
+M<-3
 tam.n<-c(50,200,1000)
-beta<-c(0.3,0.1)
+beta.verd<-c(0.3,0.1)
 phi<- 4  # phi = 1/sigma2
 sigma<-1/sqrt(phi)
-
-
- 
-dados<-geraRegGamma(100, epsilon.alavanca = 0., epsilon.resposta = 0.05)
 
 ```
 
 #### (c) 
 Mecanismos de Contaminação: Para cada amostra gerada, considere os seguintes cenários de
 contaminação com proporção $\epsilon in {0%, 5%, 10%}$:
+
 i) Cenário C0 (Sem contaminação): Dados puros gerados estritamente pelo modelo teórico.
 ```{r}
-
-num_cores <- detectCores() - 3
-cl <- makeCluster(num_cores)
-registerDoParallel(cl)
+alfas<-c(0,0.1,0.25,0.5,0.75,1)
 nome.amostra<-"C0"
-gera.amostras(n=tam.n[3])
-stopCluster(cl)
-arquivo<-paste0("Amostras/",nome.amostra,"_",n,".RDS")
-amostras<-readRDS(arquivo)
-interceptos<-sapply(1:M,FUN=function(x){amostras[[x]]$theta[1]})
-beta1<-sapply(1:M,FUN=function(x){amostras[[x]]$theta[2]})
+
+jpeg(file=paste0("Resultados/",paste0(nome.amostra,"_Intercepto" ,".png")), width = 1000, height = 500, quality = 100, pointsize = 20)
+par(mfrow=c(2,3), mar=c(3,3,3, 2))
+boxplot.intercepto<-function(alpha)
+{
+  recupera.intercepto.emv<-function(n)
+  {
+    
+    arquivo<-paste0("Amostras/", nome.amostra, "_", n,"(",alpha,")", ".RDS")
+    amostras<-readRDS(arquivo)
+    interceptos.emv<-sapply(1:M,FUN=function(x){amostras[[x]]$theta.emv[1]})
+    return(interceptos.emv)
+  }
+  interceptos.emv<-lapply(tam.n, recupera.intercepto.emv)
+  
+  recupera.intercepto.emdpde<-function(n)
+  {
+    
+    arquivo<-paste0("Amostras/", nome.amostra, "_", n,"(",alpha,")", ".RDS")
+    amostras<-readRDS(arquivo)
+    interceptos.emdpde<-sapply(1:M,FUN=function(x){amostras[[x]]$theta.emdpde[1]})
+    return(interceptos.emdpde)
+  }
+  interceptos.emdpde<-lapply(tam.n, recupera.intercepto.emdpde)
+  
+  paleta_completa <- c("#EADDF0", "#C2A5CF", "#8B629C", "#E8F5D6", "#C9E69E", "#8CB858")
+  boxplot(c(interceptos.emv,interceptos.emdpde),boxwex=0.2,main=paste0(nome.amostra," Intercepto" ," (", alpha,")"), pch=1,at=c(1,1.25,1.5, 1.75, 2, 2.25), xaxt = "n",col=paleta_completa)
+  abline(h=beta.verd[1], lty=2, lwd=2)
+  
+  if(alpha==0)legend("topright",legend = paste0(rep(c("EMV","MDPDE"),each=3)," - n = ",tam.n), col=paleta_completa, bty="n", fill=paleta_completa, cex=0.5)
+}
+lapply(alfas, boxplot.intercepto)
+dev.off()
+
+
+
+jpeg(file=paste0("Resultados/",paste0(nome.amostra,"_Beta1" ,".png")), width = 1000, height = 500, quality = 100, pointsize = 20)
+par(mfrow=c(2,3), mar=c(3,3,3, 2))
+boxplot.beta1<-function(alfa)
+{
+  recupera.beta1.emv<-function(n)
+  {
+    
+    arquivo<-paste0("Amostras/", nome.amostra, "_", n,"(",alfa,")", ".RDS")
+    amostras<-readRDS(arquivo)
+    betas.emv<-sapply(1:M,FUN=function(x){amostras[[x]]$theta.emv[1]})
+    return(betas.emv)
+  }
+  betas.emv<-lapply(tam.n, recupera.beta1.emv)
+  
+  recupera.beta1.emdpde<-function(n)
+  {
+    
+    arquivo<-paste0("Amostras/", nome.amostra, "_", n,"(",alfa,")", ".RDS")
+    amostras<-readRDS(arquivo)
+    betas.emdpde<-sapply(1:M,FUN=function(x){amostras[[x]]$theta.emdpde[1]})
+    return(betas.emdpde)
+  }
+  betas.emdpde<-lapply(tam.n, recupera.beta1.emdpde)
+  
+  paleta_completa <- c("#EADDF0", "#C2A5CF", "#8B629C", "#E8F5D6", "#C9E69E", "#8CB858")
+  boxplot(c(betas.emv,betas.emdpde),boxwex=0.2,main=paste0(nome.amostra," Beta1" ," (", alfa,")"), pch=1,at=c(1,1.25,1.5, 1.75, 2, 2.25), xaxt = "n",col=paleta_completa)
+  abline(h=beta.verd[1], lty=2, lwd=2)
+  
+  if(alfa==0)legend("topright",legend = paste0(rep(c("EMV","MDPDE"),each=3)," - n = ",tam.n), col=paleta_completa, bty="n", fill=paleta_completa, cex=0.5)
+}
+lapply(alfas, boxplot.beta1)
+dev.off()
 
 ```
 
 ii) Cenário C1 (Outliers verticais na resposta Y): Uma fração $\epsilon$ das observações é substituída por valores atípicos severos na resposta Y.
 
+Neste cenário uma fração das observações tiveram suas respostas substituídas por um valor gerado de uma gamma com média 5 vezes o valor original de média para a observação.
+
+#### 5% de contaminação na resposta
 
 ```{r}
+nome.amostra<-"C1.5"
 
+jpeg(file=paste0("Resultados/",paste0(nome.amostra,"_Intercepto" ,".png")), width = 1000, height = 500, quality = 100, pointsize = 20)
+par(mfrow=c(2,3), mar=c(3,3,3, 2))
+lapply(alfas, boxplot.intercepto)
+dev.off()
 
+jpeg(file=paste0("Resultados/",paste0(nome.amostra,"_Beta1" ,".png")), width = 1000, height = 500, quality = 100, pointsize = 20)
+par(mfrow=c(2,3), mar=c(3,3,3, 2))
+lapply(alfas, boxplot.beta1)
+dev.off()
 
 ```
+
+#### 10% de contaminação na resposta
+
+```{r, eval=FALSE}
+nome.amostra<-"C1.10"
+
+jpeg(file=paste0("Resultados/",paste0(nome.amostra,"_Intercepto" ,".png")), width = 1000, height = 500, quality = 100, pointsize = 20)
+par(mfrow=c(2,3), mar=c(3,3,3, 2))
+lapply(alfas, boxplot.intercepto)
+dev.off()
+
+jpeg(file=paste0("Resultados/",paste0(nome.amostra,"_Beta1" ,".png")), width = 1000, height = 500, quality = 100, pointsize = 20)
+par(mfrow=c(2,3), mar=c(3,3,3, 2))
+lapply(alfas, boxplot.beta1)
+dev.off()
+
+```
+
+
+
 iii) Cenário C2 (Pontos de alavancagem em X): Uma fração $\epsilon$ do vetor de covariáveis contínuas é substituída por pontos extremos/distantes.
-```{r}
-mu<-geraMU(50, epsilon = 0.05)
-dados<-geraRegGamma(50, mu)
-```
+Neste cenário uma fração das observações tiveram seus respectivos valores para a covariável $x_{i1}$ gerada de uma uniforme no intervalo (16,17).
 
 
 iv) Cenário C3 (Contaminação mista X e Y): Combinação simultânea de pontos de alavancagem em xi1 com resposta discrepante em Y.
-A depender do modelo, contaminações específicas precisam ser consideradas. De toda forma,
-essas contaminações devem buscar englobar os casos apresentados acima.
+Neste cenário uma fração das observação tiveram simultaneamente suas repostas substituídas por um valor gerado de uma gamma com média 5 vezes o valor original e seus respectivos valores para a covariável $x_{i1}$ gerados de uma uniforme no intervalo (16,17).
 
-```{r}
 
-```
 
+
+## Referências
 
 
 
