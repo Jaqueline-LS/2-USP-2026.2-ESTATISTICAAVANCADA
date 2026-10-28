@@ -165,7 +165,7 @@ $$\text{criterio} = \sum_{j=0}^p \left( \beta_j^{(m+1)} - \beta_j^{(m)} \right)^
 
 \newpage
 
-## Simuation Study
+## Simulation Study
 
 The true model, that is, the one that will generate the samples, is defined as follows:
 
