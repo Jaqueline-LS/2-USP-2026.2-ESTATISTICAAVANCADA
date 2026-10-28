@@ -1,5 +1,5 @@
 ---
-title:  \LARGE \textbf{MAE5834 - Estudo de Simulação Inferência Robusta}
+title:  \LARGE \textbf{MAE5834 - Estudo de Simulação Inferência Robusta - Gamma}
 author: 
   - Jaqueline Lamas da Silva (17646475),
 
@@ -56,36 +56,45 @@ sample(modelos,size=1)
 
 ## Introdução
 
-Este trabalho prático tem como objetivo avaliar o desempenho do
-MDPDE em comparação ao EMV sob diferentes cenários de contaminação e valores da constante de afinação $\alpha \in [0,1)$. O modelo sorteado foi o Gamma.
+Este trabalho prático tem como objetivo avaliar o desempenho do MDPDE em comparação ao EMV sob diferentes cenários de contaminação e valores da constante de afinação $\alpha \in [0,1)$. Sorteamos no software R Core Team (2026) um número de 1 a 10 para definir o modelo a ser trabalhado. O modelo de número 3 foi sorteado, por isso, vamos trabalhar com o modelo de regressão Gamma. Nas seções a seguir vamos definir o modelo, apresentar as metodologias adotadas, descrever os cenários e discutir os resultados obtidos.
 
 
-#### (a) 
+## Modelo 
 
-**Para o modelo sorteado, escreva a função de densidade, o vetor de escore e a função objetivo do MDPDE a ser minimizada.**
-
-Seja Y uma variável aleatória com distribuição gama de média $\mu$ e coeficiente de variação $\phi^{-\frac{1}{2}}$. A função de densidade de probabilidade de Y é dada por:
+Seja Y uma variável aleatória com distribuição gamma de média $\mu$ e coeficiente de variação $\phi^{-\frac{1}{2}}$. A função de densidade de probabilidade de Y é dada por:
 
 \begin{align*}
 f_Y(y,\mu,\phi) = exp\left\{ \phi \left[ \frac{-y}{\mu} - log(\mu) \right] - log(\Gamma(\phi)) + \phi log(\phi y) - log(y) \right\},
 \end{align*} em que $y>0$, $\phi>0$, $\mu>0$ e $\Gamma(\phi) = \int_0^\infty t ^{\phi -1} e^{-t}dt$ é a função gama.
 
-**Vetor Escore**
 
-Seja $Y_1, \cdots, Y_n$ uma amostra aleatória de Y
+Seja $Y_1, \cdots, Y_n$ uma amostra aleatória com
 
 \begin{align*}
 Y_i|\mathbf{x_i} \overset{\text{ind}}{\sim} Gamma (\mu_i, \phi) \\
-\mu_i = log(\eta_i), \eta_i = \mathbf{x_i}^{\intercal} \boldsymbol{\beta}
+\eta_i = log(\mu_i), \eta_i = \mathbf{x_i}^{\intercal} \boldsymbol{\beta}
 \end{align*}
 
-Com isso, o vetor escore para a i-ésima observação é dado por:
+Neste trabalho, vamos manter $\phi$ fixado, com isso, o vetor de parâmetros é $\boldsymbol{\beta} = (\beta_0, \beta_1)^\intercal$. O vetor escore pode ser obtido derivando a log-verossimilhança em relação a $\boldsymbol{\beta}$. Para a i-ésima observação ele é dado por:
 \begin{align*} 
 u_{\boldsymbol{\beta}}(y_i) = \phi \frac{(y_i - \mu_i)}{\mu_i} \mathbf{x_i},
 \end{align*}
-em que $\mathbf{x_i}$ é a i-ésima linha da matriz $\mathbf{X}$.
+em que $\mathbf{x_i}$ é a i-ésima linha da matriz $\mathbf{X}$. Para a amostra completa ele pode ser expresso como
 
-**Função objetivo**
+\begin{align*} 
+U_{\boldsymbol{\beta}}(\boldsymbol{y}) = \phi \mathbf{X}^\intercal \mathbf{V}^{\frac{-1}{2}}(\mathbf{y}- \mathbf{X}\boldsymbol{\beta})
+\end{align*}
+
+em que $\mathbf{V}^{-\frac{1}{2}} =\text{diag}\left\{ \frac{1}{\mu_1}, \cdots, \frac{1}{\mu_n}  \right\}$, pois a função de variânicia para a distribuição Gamma é $V(\mu) = \mu^2$. 
+
+
+### Estimador de Máxima Verossimilhança (EMV)
+
+As estimativas de máxima verossimilhança para $\beta$ serão obtidas por meio do pacote do *gamlss* (Rigby & Stasinopoulos, 2005). Generalized additive models for location, scale and shape,(with discussion), Appl. Statist., 54, part 3, pp 507-554.
+. 
+
+
+### Estimador de Mínima Densidade Power Divergencia (MDPDE)
 
 O MDPDE minimiza a seguinte função perda: 
 
@@ -104,18 +113,19 @@ E as estimativas são obtidas resolvendo o sistema de equações de estimação:
 
 
 
+
 #### (b)
 
-Modelo verdadeiro:
+O modelo verdadeiro, ou seja, aquele que irá gerar as amostras é definido da seguinte maneira:
 \begin{align*}
 Y_i|\mathbf{x_i} \overset{\text{ind}}{\sim} Gamma (\mu_i, \phi) \\
-\mu_i = log(\eta_i), \eta_i = \beta_0 + \beta_1 x_{i1}
-\end{align*}, em que
+\eta_i = log(\mu_i), \eta_i = \beta_0 + \beta_1 x_{i1} 
+\end{align*}
 
-$$\boldsymbol{\beta} = (0.3, 0.1)^\intercal;\ \phi=4;\ x_{i1} \sim U(1,10);\ i=1,\cdots,n. $$
+em que $$\boldsymbol{\beta} = (0.3, 0.1)^\intercal;\ \phi=4;\ x_{i1} \sim U(1,10);\ i=1,\cdots,n. $$
 
 ```{r, echo=FALSE}
-M<-3
+M<-3000
 tam.n<-c(50,200,1000)
 beta.verd<-c(0.3,0.1)
 phi<- 4  # phi = 1/sigma2
@@ -123,138 +133,77 @@ sigma<-1/sqrt(phi)
 
 ```
 
-#### (c) 
-Mecanismos de Contaminação: Para cada amostra gerada, considere os seguintes cenários de
-contaminação com proporção $\epsilon in {0%, 5%, 10%}$:
+####(c)
+
+Mecanismos de Contaminação: Para cada amostra gerada, considere os seguintes cenários de contaminação com proporção $\epsilon in \{0%, 5%, 10%\}$:
 
 i) Cenário C0 (Sem contaminação): Dados puros gerados estritamente pelo modelo teórico.
-```{r}
-alfas<-c(0,0.1,0.25,0.5,0.75,1)
+
+```{r, echo=FALSE}
+alfas<-c(0,0.1,0.25,0.5,0.75,0.9)
 nome.amostra<-"C0"
 
-jpeg(file=paste0("Resultados/",paste0(nome.amostra,"_Intercepto" ,".png")), width = 1000, height = 500, quality = 100, pointsize = 20)
-par(mfrow=c(2,3), mar=c(3,3,3, 2))
-boxplot.intercepto<-function(alpha)
-{
-  recupera.intercepto.emv<-function(n)
-  {
-    
-    arquivo<-paste0("Amostras/", nome.amostra, "_", n,"(",alpha,")", ".RDS")
-    amostras<-readRDS(arquivo)
-    interceptos.emv<-sapply(1:M,FUN=function(x){amostras[[x]]$theta.emv[1]})
-    return(interceptos.emv)
-  }
-  interceptos.emv<-lapply(tam.n, recupera.intercepto.emv)
-  
-  recupera.intercepto.emdpde<-function(n)
-  {
-    
-    arquivo<-paste0("Amostras/", nome.amostra, "_", n,"(",alpha,")", ".RDS")
-    amostras<-readRDS(arquivo)
-    interceptos.emdpde<-sapply(1:M,FUN=function(x){amostras[[x]]$theta.emdpde[1]})
-    return(interceptos.emdpde)
-  }
-  interceptos.emdpde<-lapply(tam.n, recupera.intercepto.emdpde)
-  
-  paleta_completa <- c("#EADDF0", "#C2A5CF", "#8B629C", "#E8F5D6", "#C9E69E", "#8CB858")
-  boxplot(c(interceptos.emv,interceptos.emdpde),boxwex=0.2,main=paste0(nome.amostra," Intercepto" ," (", alpha,")"), pch=1,at=c(1,1.25,1.5, 1.75, 2, 2.25), xaxt = "n",col=paleta_completa)
-  abline(h=beta.verd[1], lty=2, lwd=2)
-  
-  if(alpha==0)legend("topright",legend = paste0(rep(c("EMV","MDPDE"),each=3)," - n = ",tam.n), col=paleta_completa, bty="n", fill=paleta_completa, cex=0.5)
-}
-lapply(alfas, boxplot.intercepto)
-dev.off()
+geraBoxplot(nome.amostra)
 
+cenarios<-c("C0","C1.5","C1.10","C2.5","C2.10","C3.5","C3.10")
+sapply(cenarios, geraBoxplot)
 
-
-jpeg(file=paste0("Resultados/",paste0(nome.amostra,"_Beta1" ,".png")), width = 1000, height = 500, quality = 100, pointsize = 20)
-par(mfrow=c(2,3), mar=c(3,3,3, 2))
-boxplot.beta1<-function(alfa)
-{
-  recupera.beta1.emv<-function(n)
-  {
-    
-    arquivo<-paste0("Amostras/", nome.amostra, "_", n,"(",alfa,")", ".RDS")
-    amostras<-readRDS(arquivo)
-    betas.emv<-sapply(1:M,FUN=function(x){amostras[[x]]$theta.emv[1]})
-    return(betas.emv)
-  }
-  betas.emv<-lapply(tam.n, recupera.beta1.emv)
-  
-  recupera.beta1.emdpde<-function(n)
-  {
-    
-    arquivo<-paste0("Amostras/", nome.amostra, "_", n,"(",alfa,")", ".RDS")
-    amostras<-readRDS(arquivo)
-    betas.emdpde<-sapply(1:M,FUN=function(x){amostras[[x]]$theta.emdpde[1]})
-    return(betas.emdpde)
-  }
-  betas.emdpde<-lapply(tam.n, recupera.beta1.emdpde)
-  
-  paleta_completa <- c("#EADDF0", "#C2A5CF", "#8B629C", "#E8F5D6", "#C9E69E", "#8CB858")
-  boxplot(c(betas.emv,betas.emdpde),boxwex=0.2,main=paste0(nome.amostra," Beta1" ," (", alfa,")"), pch=1,at=c(1,1.25,1.5, 1.75, 2, 2.25), xaxt = "n",col=paleta_completa)
-  abline(h=beta.verd[1], lty=2, lwd=2)
-  
-  if(alfa==0)legend("topright",legend = paste0(rep(c("EMV","MDPDE"),each=3)," - n = ",tam.n), col=paleta_completa, bty="n", fill=paleta_completa, cex=0.5)
-}
-lapply(alfas, boxplot.beta1)
-dev.off()
 
 ```
 
-ii) Cenário C1 (Outliers verticais na resposta Y): Uma fração $\epsilon$ das observações é substituída por valores atípicos severos na resposta Y.
+<!-- ii) Cenário C1 (Outliers verticais na resposta Y): Uma fração $\epsilon$ das observações é substituída por valores atípicos severos na resposta Y. -->
 
-Neste cenário uma fração das observações tiveram suas respostas substituídas por um valor gerado de uma gamma com média 5 vezes o valor original de média para a observação.
+<!-- Neste cenário uma fração das observações tiveram suas respostas substituídas por um valor gerado de uma gamma com média 5 vezes o valor original de média para a observação. -->
 
-#### 5% de contaminação na resposta
+<!-- #### 5% de contaminação na resposta -->
 
-```{r}
-nome.amostra<-"C1.5"
+<!-- ```{r} -->
+<!-- nome.amostra<-"C1.5" -->
 
-jpeg(file=paste0("Resultados/",paste0(nome.amostra,"_Intercepto" ,".png")), width = 1000, height = 500, quality = 100, pointsize = 20)
-par(mfrow=c(2,3), mar=c(3,3,3, 2))
-lapply(alfas, boxplot.intercepto)
-dev.off()
+<!-- jpeg(file=paste0("Resultados/",paste0(nome.amostra,"_Intercepto" ,".png")), width = 1000, height = 500, quality = 100, pointsize = 20) -->
+<!-- par(mfrow=c(2,3), mar=c(3,3,3, 2)) -->
+<!-- lapply(alfas, boxplot.intercepto) -->
+<!-- dev.off() -->
 
-jpeg(file=paste0("Resultados/",paste0(nome.amostra,"_Beta1" ,".png")), width = 1000, height = 500, quality = 100, pointsize = 20)
-par(mfrow=c(2,3), mar=c(3,3,3, 2))
-lapply(alfas, boxplot.beta1)
-dev.off()
+<!-- jpeg(file=paste0("Resultados/",paste0(nome.amostra,"_Beta1" ,".png")), width = 1000, height = 500, quality = 100, pointsize = 20) -->
+<!-- par(mfrow=c(2,3), mar=c(3,3,3, 2)) -->
+<!-- lapply(alfas, boxplot.beta1) -->
+<!-- dev.off() -->
 
-```
+<!-- ``` -->
 
-#### 10% de contaminação na resposta
+<!-- #### 10% de contaminação na resposta -->
 
-```{r, eval=FALSE}
-nome.amostra<-"C1.10"
+<!-- ```{r, eval=FALSE} -->
+<!-- nome.amostra<-"C1.10" -->
 
-jpeg(file=paste0("Resultados/",paste0(nome.amostra,"_Intercepto" ,".png")), width = 1000, height = 500, quality = 100, pointsize = 20)
-par(mfrow=c(2,3), mar=c(3,3,3, 2))
-lapply(alfas, boxplot.intercepto)
-dev.off()
+<!-- jpeg(file=paste0("Resultados/",paste0(nome.amostra,"_Intercepto" ,".png")), width = 1000, height = 500, quality = 100, pointsize = 20) -->
+<!-- par(mfrow=c(2,3), mar=c(3,3,3, 2)) -->
+<!-- lapply(alfas, boxplot.intercepto) -->
+<!-- dev.off() -->
 
-jpeg(file=paste0("Resultados/",paste0(nome.amostra,"_Beta1" ,".png")), width = 1000, height = 500, quality = 100, pointsize = 20)
-par(mfrow=c(2,3), mar=c(3,3,3, 2))
-lapply(alfas, boxplot.beta1)
-dev.off()
+<!-- jpeg(file=paste0("Resultados/",paste0(nome.amostra,"_Beta1" ,".png")), width = 1000, height = 500, quality = 100, pointsize = 20) -->
+<!-- par(mfrow=c(2,3), mar=c(3,3,3, 2)) -->
+<!-- lapply(alfas, boxplot.beta1) -->
+<!-- dev.off() -->
 
-```
-
-
-
-iii) Cenário C2 (Pontos de alavancagem em X): Uma fração $\epsilon$ do vetor de covariáveis contínuas é substituída por pontos extremos/distantes.
-Neste cenário uma fração das observações tiveram seus respectivos valores para a covariável $x_{i1}$ gerada de uma uniforme no intervalo (16,17).
+<!-- ``` -->
 
 
-iv) Cenário C3 (Contaminação mista X e Y): Combinação simultânea de pontos de alavancagem em xi1 com resposta discrepante em Y.
-Neste cenário uma fração das observação tiveram simultaneamente suas repostas substituídas por um valor gerado de uma gamma com média 5 vezes o valor original e seus respectivos valores para a covariável $x_{i1}$ gerados de uma uniforme no intervalo (16,17).
+
+<!-- iii) Cenário C2 (Pontos de alavancagem em X): Uma fração $\epsilon$ do vetor de covariáveis contínuas é substituída por pontos extremos/distantes. -->
+<!-- Neste cenário uma fração das observações tiveram seus respectivos valores para a covariável $x_{i1}$ gerada de uma uniforme no intervalo (16,17). -->
+
+
+<!-- iv) Cenário C3 (Contaminação mista X e Y): Combinação simultânea de pontos de alavancagem em xi1 com resposta discrepante em Y. -->
+<!-- Neste cenário uma fração das observação tiveram simultaneamente suas repostas substituídas por um valor gerado de uma gamma com média 5 vezes o valor original e seus respectivos valores para a covariável $x_{i1}$ gerados de uma uniforme no intervalo (16,17). -->
 
 
 
 
 ## Referências
 
-
+Rigby R.A. and Stasinopoulos D.M. (2005). Generalized additive models for location, scale and shape,(with discussion), Appl. Statist., 54, part 3, pp 507-554.
 
 
 

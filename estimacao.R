@@ -20,30 +20,12 @@ gera.amostras <- function(n, alpha, epsilon.alavanca = 0, epsilon.resposta = 0.1
     phi<-1/sigma_fixo^2
     X<-as.matrix(dados[,-1])
     Y<-dados$resp
-    
-    # mu0<-as.numeric(exp(X%*%beta0))
-    # V<-diag(1/mu0)
-    # w<-as.numeric(dGA(dados$resp,mu=mu0, sigma_fixo)^alpha)
-    # W<-diag(w)
-    # 
-    # b.soma<-calcular_b_soma(X,mu0, alpha, phi=phi)
 
     criterio<-criterio<-1E5
-    cont<-0
 
     while(criterio>=1E-5)
     {
-      # mu0<-as.numeric(exp(X%*%beta0))
-      # V<-diag(1/mu0)
-      # w<-as.numeric(dGA(dados$resp,mu=mu0, sigma_fixo)^alpha)
-      # W<-diag(w)
-      # 
-      # b.soma<-calcular_b_soma(X,mu0, alpha, phi=phi)
-      # 
-      # beta<- solve(phi * t(X)%*% V %*% W %*% X) %*% ((phi * t(X) %*% V %*% W %*% Y) - b.soma)
-      # 
-      
-
+     
       eta0 <- X %*% beta0
       mu0  <- as.numeric(exp(eta0))
       
@@ -61,7 +43,6 @@ gera.amostras <- function(n, alpha, epsilon.alavanca = 0, epsilon.resposta = 0.1
       
       criterio <- sum((beta - beta0)^2)
       beta0 <- beta
-      cont <- cont + 1
 
     }
     theta.emdpde<-beta
